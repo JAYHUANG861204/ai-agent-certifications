@@ -1,0 +1,11 @@
+{
+  "name": "ai-agent-certifications",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Agent 證照地圖 — 2026 年主要廠商 AI Agent / Agentic AI 相關證照整理",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "validate": "node scripts/validate.mjs",
+    "test": "node scripts/validate.mjs"
+  }
+}

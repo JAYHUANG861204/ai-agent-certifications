@@ -29,7 +29,7 @@ git commit -m "說明改了什麼"
 git push -u origin update/描述性分支名稱
 ```
 
-本機預覽：`npx serve .` 或 `python -m http.server 8000`，開 http://localhost:8000
+本機預覽：`npm start`（或 `npx serve .` / `python -m http.server 8000`），開 http://localhost:8000
 
 ## 每筆證照的必填欄位
 

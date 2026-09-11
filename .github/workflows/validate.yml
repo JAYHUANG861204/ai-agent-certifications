@@ -1,22 +1,35 @@
-name: 驗證證照資料
+# 「檢查」— 每個 Pull Request 都會自動跑這個流程。
+#
+# 這是 CI（Continuous Integration，持續整合）的部分：
+# 有人提出改動時，機器先幫忙檢查一遍，錯的東西進不了 master。
+# 你在 PR 頁面看到的綠色勾勾 ✓ 或紅色叉叉 ✗ 就是這支跑出來的。
 
+name: 檢查證照資料
+
+# 什麼時候跑
 on:
-  pull_request:
-    paths:
-      - 'data/certs.json'
-  push:
+  pull_request:          # 有人開 PR 時
     branches: [master]
-    paths:
-      - 'data/certs.json'
-  workflow_dispatch:
+  push:                  # 直接推 master 時也跑一次（雙保險）
+    branches: [master]
+  workflow_dispatch:     # 允許在 Actions 頁面手動按按鈕跑
 
 jobs:
   validate:
-    name: 檢查 data/certs.json 格式
+    name: 驗證 data/certs.json
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # 第 1 步：把這個 repo 的程式碼抓到執行機器上
+      - name: 取得程式碼
+        uses: actions/checkout@v4
+
+      # 第 2 步：準備 Node.js 環境
+      - name: 安裝 Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: node scripts/validate.mjs
+
+      # 第 3 步：跑檢查腳本。腳本回傳非 0 就代表失敗，整個流程會變紅燈
+      - name: 跑資料檢查
+        run: node scripts/validate.mjs

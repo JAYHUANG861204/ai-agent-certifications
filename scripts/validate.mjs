@@ -1,81 +1,130 @@
-import { readFileSync } from 'node:fs';
+#!/usr/bin/env node
+/**
+ * 證照資料檢查器 — CI 在每個 Pull Request 上都會跑這支。
+ *
+ * 它的工作是在資料進到 master 之前，把「一眼看不出來但會讓網頁壞掉」的錯誤攔下來：
+ * 日期打錯、必填欄位漏掉、等級標籤拼錯、id 撞號。
+ *
+ * 本地自己先跑一次：  node scripts/validate.mjs
+ * 沒有任何外部套件，不需要 npm install。
+ */
 
-const FILE = 'data/certs.json';
-const REQUIRED_FIELDS = ['id', 'provider', 'name', 'code', 'level', 'levelLabel', 'price', 'format', 'focus', 'url', 'taiwan', 'verified'];
-const VALID_LEVELS = ['foundational', 'associate', 'professional', 'executive'];
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const ID_RE = /^[a-z0-9-]+$/;
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
-function fail(errors) {
-  console.error(`\n✗ 驗證失敗，共 ${errors.length} 個錯誤：\n`);
-  errors.forEach(e => console.error('  - ' + e));
-  console.error('');
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const DATA_PATH = join(ROOT, "data", "certs.json");
+
+// ---- 允許的值。要新增等級請一併改這裡和 index.html 的篩選按鈕 ----
+const LEVELS = ["foundational", "associate", "professional", "executive"];
+const REQUIRED = ["id", "provider", "name", "code", "level", "levelLabel", "price", "format", "focus", "taiwan", "url", "verified"];
+
+const errors = [];
+const warnings = [];
+
+const fail = (where, msg, fix) => errors.push({ where, msg, fix });
+const warn = (where, msg) => warnings.push({ where, msg });
+
+// ---- 1. 檔案讀得到、而且是合法 JSON ----
+let payload;
+try {
+  payload = JSON.parse(readFileSync(DATA_PATH, "utf8"));
+} catch (err) {
+  console.error(`\n✗ data/certs.json 不是合法的 JSON：\n  ${err.message}\n`);
+  console.error("  最常見的原因：多了或少了一個逗號、用了中文的引號「」而不是英文的 \"。");
+  console.error("  貼到 https://jsonlint.com 可以指出是第幾行。\n");
   process.exit(1);
 }
 
-let raw;
-try {
-  raw = readFileSync(FILE, 'utf8');
-} catch (err) {
-  fail([`找不到或無法讀取 ${FILE}：${err.message}`]);
+if (!payload || typeof payload !== "object" || !Array.isArray(payload.certs)) {
+  console.error('\n✗ data/certs.json 的最外層必須是 { "meta": {...}, "certs": [...] }\n');
+  process.exit(1);
 }
 
-let data;
-try {
-  data = JSON.parse(raw);
-} catch (err) {
-  fail([`${FILE} 不是合法的 JSON：${err.message}`]);
-}
+// ---- 2. 逐筆檢查 ----
+const isDate = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const asDate = s => {
+  const [y, m, d] = s.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  // 攔掉 2026-02-30 這種格式對但不存在的日期（Date.parse 會悄悄幫你進位到 3 月，不會報錯）
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d ? dt : null;
+};
 
-if (!data.meta || !DATE_RE.test(data.meta.updated || '') || isNaN(Date.parse(data.meta.updated))) {
-  fail(['meta.updated 缺少或格式錯誤，應為 YYYY-MM-DD']);
-}
+const seenIds = new Map();
 
-if (!Array.isArray(data.certs) || data.certs.length === 0) {
-  fail(['certs 必須是非空陣列']);
-}
+payload.certs.forEach((c, i) => {
+  const where = c.id ? `certs[${i}] (id: ${c.id})` : `certs[${i}]`;
 
-const errors = [];
-const seenIds = new Set();
-
-data.certs.forEach((cert, i) => {
-  const where = `certs[${i}]${cert.id ? ` (${cert.id})` : ''}`;
-
-  for (const field of REQUIRED_FIELDS) {
-    if (cert[field] === undefined || cert[field] === null || cert[field] === '') {
-      errors.push(`${where}: 缺少必填欄位 "${field}"`);
+  for (const field of REQUIRED) {
+    if (c[field] === undefined || c[field] === null || c[field] === "") {
+      fail(where, `缺少必填欄位 "${field}"`, `補上 "${field}"。可以複製上一筆證照的格式來改。`);
     }
   }
 
-  if (cert.id) {
-    if (!ID_RE.test(cert.id)) {
-      errors.push(`${where}: id 只能用小寫字母、數字、連字號`);
+  if (c.id !== undefined) {
+    if (!/^[a-z0-9-]+$/.test(c.id)) {
+      fail(where, `id "${c.id}" 只能用小寫英文、數字和連字號`, "例如 aws-aif-c01（發證單位-代碼）。");
     }
-    if (seenIds.has(cert.id)) {
-      errors.push(`${where}: id 重複`);
+    if (seenIds.has(c.id)) {
+      fail(where, `id "${c.id}" 和 certs[${seenIds.get(c.id)}] 重複`, "每筆證照的 id 必須唯一，通常是 發證單位-證照代碼。");
+    } else {
+      seenIds.set(c.id, i);
     }
-    seenIds.add(cert.id);
   }
 
-  if (cert.level && !VALID_LEVELS.includes(cert.level)) {
-    errors.push(`${where}: level "${cert.level}" 不合法，只能是 ${VALID_LEVELS.join(' / ')}`);
+  // 等級
+  if (c.level !== undefined && !LEVELS.includes(c.level)) {
+    fail(where, `"level" 是 ${JSON.stringify(c.level)}，不在允許值內`, `只能填：${LEVELS.join(" / ")}`);
   }
 
-  if (cert.url && !/^https?:\/\//.test(cert.url)) {
-    errors.push(`${where}: url 必須以 http:// 或 https:// 開頭`);
+  // 網址
+  if (c.url !== undefined) {
+    if (typeof c.url !== "string" || !/^https?:\/\//.test(c.url)) {
+      fail(where, `"url" 必須是 http(s) 開頭的網址`, "填官方頁面或整理來源的參考連結，不能留空。");
+    }
   }
 
-  if (cert.verified && (!DATE_RE.test(cert.verified) || isNaN(Date.parse(cert.verified)))) {
-    errors.push(`${where}: verified 格式應為 YYYY-MM-DD`);
+  // 核實日期
+  if (c.verified !== undefined) {
+    if (!isDate(c.verified)) {
+      fail(where, `"verified" 的格式必須是 YYYY-MM-DD，現在是 ${JSON.stringify(c.verified)}`, '例如 "2026-09-11"。月和日不足兩位要補 0。');
+    } else if (!asDate(c.verified)) {
+      fail(where, `"verified" 是 ${c.verified}，但這個日期不存在`, "檢查一下月份的天數。");
+    }
   }
 
-  if (cert.focus && cert.focus.length > 200) {
-    console.warn(`⚠ ${where}: focus 超過 200 字，建議精簡（目前 ${cert.focus.length} 字）`);
+  // 提醒（不會擋 CI，但值得看一眼）
+  if (c.focus && c.focus.length > 200) {
+    warn(where, `"focus" 有 ${c.focus.length} 個字，版面上會很擠 — 建議壓在 120 字以內。`);
+  }
+  if (c.code === undefined) {
+    warn(where, '沒有 "code" 欄位 — 沒有官方代碼的話請填 "—" 而不是整個省略。');
   }
 });
 
-if (errors.length > 0) {
-  fail(errors);
+// ---- 3. meta ----
+if (!payload.meta || !isDate(payload.meta.updated) || !asDate(payload.meta.updated)) {
+  fail("meta", '缺少 "meta.updated" 或格式不是 YYYY-MM-DD', "改動資料時請一併把 meta.updated 換成今天的日期。");
 }
 
-console.log(`✓ ${FILE} 通過驗證，共 ${data.certs.length} 筆證照資料。`);
+// ---- 4. 報告 ----
+const n = Array.isArray(payload.certs) ? payload.certs.length : 0;
+
+if (warnings.length) {
+  console.log(`\n⚠️  ${warnings.length} 個提醒（不會擋住合併）：\n`);
+  warnings.forEach(w => console.log(`  · ${w.where}\n    ${w.msg}\n`));
+}
+
+if (errors.length) {
+  console.error(`\n✗ 檢查沒過：${n} 筆證照裡有 ${errors.length} 個問題\n`);
+  errors.forEach((e, i) => {
+    console.error(`  ${i + 1}. ${e.where}`);
+    console.error(`     問題：${e.msg}`);
+    console.error(`     怎麼修：${e.fix}\n`);
+  });
+  console.error("  修好之後在本機跑 `node scripts/validate.mjs` 確認，再 push 上來。\n");
+  process.exit(1);
+}
+
+console.log(`\n✓ 檢查通過：${n} 筆證照，格式全部正確。\n`);

@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 證照與分類資料：任何人都能讀（網頁本身不需要登入就能瀏覽），
+    // 只有登入的使用者能寫（目前只有「同步資料到資料庫」按鈕會寫）。
+    match /certifications/{certId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /meta/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}

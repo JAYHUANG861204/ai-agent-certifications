@@ -44,6 +44,7 @@ git push -u origin update/描述性分支名稱
 | `price` | 費用（字串，允許填「查官網」） | `US$200` |
 | `format` | 考試形式（時長、題數等） | `120 分鐘・60–70 題` |
 | `focus` | 一兩句話說明考什麼，建議 200 字以內 | — |
+| `categories` | 分類標籤陣列，可用值定義在 [`data/categories.json`](data/categories.json) | `["agent-development"]` |
 | `taiwan` | 台灣考試方式（實體考場／線上監考） | `線上遠端監考，不限地點` |
 | `url` | 參考來源，必須是 `http://` 或 `https://` 開頭的連結 | — |
 | `verified` | 最後核實日期，格式 `YYYY-MM-DD` | `2026-09-11` |
@@ -63,6 +64,10 @@ git push -u origin update/描述性分支名稱
 1. CI 是否為綠燈
 2. 對照官方頁面確認價格、時長、等級是否正確
 3. `id` 沒有重複、格式符合規則
+
+## 關於資料庫同步
+
+網頁實際顯示的內容來自 Firestore 資料庫，`data/certs.json` 是**送審用的原始資料**（走 PR、有 CI 驗證、有 git 歷史）。PR 合併之後，資料還不會馬上出現在網頁上——需要有人用 Google 帳號登入網站，按右上角的「同步資料到資料庫」按鈕，才會把 `certs.json` 目前的內容整批寫入 Firestore。第一次登入者都能觸發同步。
 
 ## 不想直接編輯？
 

@@ -15,10 +15,20 @@ import { dirname, join } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_PATH = join(ROOT, "data", "certs.json");
+const CATEGORIES_PATH = join(ROOT, "data", "categories.json");
 
 // ---- 允許的值。要新增等級請一併改這裡和 index.html 的篩選按鈕 ----
 const LEVELS = ["foundational", "associate", "professional", "executive"];
-const REQUIRED = ["id", "provider", "name", "code", "level", "levelLabel", "price", "format", "focus", "taiwan", "url", "verified"];
+const REQUIRED = ["id", "provider", "name", "code", "level", "levelLabel", "price", "format", "focus", "categories", "taiwan", "url", "verified"];
+
+let categoriesPayload;
+try {
+  categoriesPayload = JSON.parse(readFileSync(CATEGORIES_PATH, "utf8"));
+} catch (err) {
+  console.error(`\n✗ data/categories.json 讀不到或不是合法的 JSON：\n  ${err.message}\n`);
+  process.exit(1);
+}
+const CATEGORIES = (categoriesPayload.categories || []).map(c => c.id);
 
 const errors = [];
 const warnings = [];
@@ -76,6 +86,19 @@ payload.certs.forEach((c, i) => {
   // 等級
   if (c.level !== undefined && !LEVELS.includes(c.level)) {
     fail(where, `"level" 是 ${JSON.stringify(c.level)}，不在允許值內`, `只能填：${LEVELS.join(" / ")}`);
+  }
+
+  // 分類
+  if (c.categories !== undefined) {
+    if (!Array.isArray(c.categories) || c.categories.length === 0) {
+      fail(where, `"categories" 必須是非空陣列`, `例如 ["agent-development"]，可用值：${CATEGORIES.join(" / ")}`);
+    } else {
+      c.categories.forEach(cat => {
+        if (!CATEGORIES.includes(cat)) {
+          fail(where, `分類 "${cat}" 不在 data/categories.json 裡`, `只能填：${CATEGORIES.join(" / ")}，或先在 categories.json 新增這個分類。`);
+        }
+      });
+    }
   }
 
   // 網址

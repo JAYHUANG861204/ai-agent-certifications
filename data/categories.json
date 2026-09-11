@@ -1,0 +1,39 @@
+{
+  "categories": [
+    {
+      "id": "cloud-fundamentals",
+      "label": "雲端與生成式 AI 基礎",
+      "description": "入門等級，建立雲端與生成式 AI 的基本概念，不要求動手實作。"
+    },
+    {
+      "id": "cloud-engineering",
+      "label": "雲端工程與 MLOps",
+      "description": "在雲端平台上建置、部署、維運機器學習與生成式 AI 系統的工程能力。"
+    },
+    {
+      "id": "agent-development",
+      "label": "Agent 開發與架構",
+      "description": "設計、開發、協調多代理系統的架構與工程實作，是 Agentic AI 的核心技能。"
+    },
+    {
+      "id": "platform-agent",
+      "label": "企業平台代理應用",
+      "description": "在特定企業軟體平台（如 CRM）上設定、部署自主代理人的實作能力。"
+    },
+    {
+      "id": "process-automation",
+      "label": "流程自動化",
+      "description": "結合 AI Agent 與既有流程自動化（RPA）工具的協作能力。"
+    },
+    {
+      "id": "governance-strategy",
+      "label": "策略與治理",
+      "description": "面向非技術背景的主管與決策者，聚焦導入策略、治理與風險判斷。"
+    },
+    {
+      "id": "vendor-neutral",
+      "label": "廠商中立通用",
+      "description": "不綁定特定雲端或平台廠商的通用型 Agentic AI 知識與方法論。"
+    }
+  ]
+}

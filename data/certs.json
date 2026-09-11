@@ -14,6 +14,7 @@
       "price": "US$200",
       "format": "線上監考・120 分鐘・60–70 題",
       "focus": "涵蓋 Agent 架構設計、多代理框架、工具/模型整合、評估調校、部署維運與安全防護，效期 2 年。",
+      "categories": ["agent-development"],
       "url": "https://www.nvidia.com/en-us/learn/certification/agentic-ai-professional/",
       "taiwan": "線上遠端監考，不限地點",
       "verified": "2026-09-10"
@@ -28,6 +29,7 @@
       "price": "查官網",
       "format": "入門等級",
       "focus": "生成式 AI 基礎概念、提示工程、負責任 AI，以及 Bedrock、SageMaker、Amazon Q 等 AWS 服務總覽。",
+      "categories": ["cloud-fundamentals"],
       "url": "https://www.examcert.app/blog/agentic-ai-certifications-2026/",
       "taiwan": "實體(台北 Pearson VUE)／線上皆可",
       "verified": "2026-09-10"
@@ -42,6 +44,7 @@
       "price": "查官網",
       "format": "助理等級",
       "focus": "模型生命週期、推論端點、特徵存儲與 MLOps，並涵蓋 Bedrock Agents 的建置與協調。",
+      "categories": ["cloud-engineering"],
       "url": "https://www.examcert.app/blog/agentic-ai-certifications-2026/",
       "taiwan": "實體(台北 Pearson VUE)／線上皆可",
       "verified": "2026-09-10"
@@ -56,6 +59,7 @@
       "price": "查官網",
       "format": "助理等級",
       "focus": "Azure OpenAI、AI Foundry、Semantic Kernel 與 Agent 協調模式的實作能力。",
+      "categories": ["cloud-engineering", "agent-development"],
       "url": "https://www.examcert.app/blog/agentic-ai-certifications-2026/",
       "taiwan": "實體(台北 Pearson VUE)／線上皆可",
       "verified": "2026-09-10"
@@ -70,6 +74,7 @@
       "price": "US$99",
       "format": "60 分鐘・入門等級",
       "focus": "微軟 2026 年證照體系中最容易入門的一張，適合完全沒有 AI 背景的人建立基礎概念。",
+      "categories": ["cloud-fundamentals"],
       "url": "https://www.molecularcloud.org/p/microsoft-ai-certifications-list-2026-every-credential-you-actually-need-to-know",
       "taiwan": "實體(台北 Pearson VUE)／線上皆可",
       "verified": "2026-09-10"
@@ -84,6 +89,7 @@
       "price": "查官網",
       "format": "2026 年新推出",
       "focus": "鎖定企業導入 Agentic AI 的解決方案架構師，著重業務流程與 Agent 架構的對應設計。",
+      "categories": ["agent-development", "governance-strategy"],
       "url": "https://www.myexamcloud.com/blog/agentic-ai-certification-path-in-2026.article",
       "taiwan": "實體(台北 Pearson VUE)／線上皆可",
       "verified": "2026-09-10"
@@ -98,6 +104,7 @@
       "price": "US$99",
       "format": "90 分鐘・50–60 題",
       "focus": "面向非技術背景的主管與決策者，聚焦 AI 策略、治理與導入判斷，不需要工程實作能力。",
+      "categories": ["governance-strategy"],
       "url": "https://certificationpractice.com/exam-overviews/google-cloud-generative-ai-leader-quick-facts",
       "taiwan": "線上遠端監考，不限地點",
       "verified": "2026-09-10"
@@ -112,6 +119,7 @@
       "price": "US$200",
       "format": "120 分鐘・50–60 題",
       "focus": "2026 年 6 月改版後，考點從 Vertex AI 管線轉向 Gemini Enterprise Agent Platform 與 Vertex AI Agent Builder。",
+      "categories": ["cloud-engineering", "agent-development"],
       "url": "https://flashgenius.net/blog-article/google-professional-machine-learning-engineer-certification-2026-guide",
       "taiwan": "線上遠端監考，不限地點",
       "verified": "2026-09-10"
@@ -126,6 +134,7 @@
       "price": "US$75（重考 US$50）",
       "format": "105 分鐘・60 題・73% 及格",
       "focus": "驗證在 Salesforce 平台上設定、測試並部署 Agentforce 自主代理人的實作能力，無報名門檻。",
+      "categories": ["platform-agent"],
       "url": "https://trailhead.salesforce.com/content/learn/modules/cert-prep-agentforce-specialist/get-started-with-salesforce-agentforce-specialist-certification-prep",
       "taiwan": "線上遠端監考，不限地點",
       "verified": "2026-09-10"
@@ -140,6 +149,7 @@
       "price": "查官網",
       "format": "助理等級",
       "focus": "驗證與 AI Agent 協作的基礎能力，技術與非技術角色皆適用，屬於 UiPath 代理式自動化入門證照。",
+      "categories": ["process-automation"],
       "url": "https://www.uipath.com/learning/certification",
       "taiwan": "純線上，不限地點",
       "verified": "2026-09-10"
@@ -154,6 +164,7 @@
       "price": "查官網",
       "format": "專業等級",
       "focus": "涵蓋 RAG 架構、Agent 設計模式與 OCI Generative AI 相關服務的整合應用。",
+      "categories": ["cloud-engineering"],
       "url": "https://www.examcert.app/blog/agentic-ai-certifications-2026/",
       "taiwan": "實體(台北 Pearson VUE)／線上皆可",
       "verified": "2026-09-10"
@@ -168,6 +179,7 @@
       "price": "低價位",
       "format": "線上自主考試",
       "focus": "預算有限但想要一張具備線上監考效力證照的選項，內容涵蓋 Agentic AI 基本原理與應用。",
+      "categories": ["vendor-neutral"],
       "url": "https://adasci.org/blog/best-agentic-ai-certifications-2026-comparison",
       "taiwan": "純線上，不限地點",
       "verified": "2026-09-10"
@@ -182,6 +194,7 @@
       "price": "查官網",
       "format": "30 小時課程・監考測驗",
       "focus": "針對想要完整、有監考測驗背書的工程師與解決方案架構師，涵蓋完整 Agentic AI 系統設計流程。",
+      "categories": ["agent-development", "vendor-neutral"],
       "url": "https://adasci.org/blog/best-agentic-ai-certifications-2026-comparison",
       "taiwan": "純線上監考，不限地點",
       "verified": "2026-09-10"

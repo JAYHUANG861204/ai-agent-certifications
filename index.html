@@ -110,6 +110,14 @@
     border-radius:100px;padding:3px 9px;cursor:pointer;
   }
   .user-chip button:hover{color:var(--text);border-color:var(--accent);}
+  .sync-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;color:var(--accent);
+    background:none;border:1px dashed var(--accent);
+    border-radius:100px;padding:3px 10px;cursor:pointer;
+  }
+  .sync-btn:hover{background:var(--lvl-professional-bg);}
+  .sync-btn:disabled{opacity:.55;cursor:default;}
   h1{
     font-family:'Source Serif 4', Georgia, serif;
     font-weight:600;
@@ -176,6 +184,10 @@
   }
   .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
+  #filters{border-bottom:none;margin-bottom:0;padding-bottom:10px;}
+  #catFilters{border-top:none;margin-top:0;padding-top:10px;}
+  #catFilters:empty{display:none;}
+
   .count-line{
     font-size:13px;color:var(--text-dim);margin-bottom:16px;
     font-family:'IBM Plex Mono',monospace;
@@ -227,6 +239,17 @@
     font-family:'IBM Plex Mono',monospace;
     font-size:12px;
     color:var(--text-dim);
+  }
+  .cat-tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .cat-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--text-dim);
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    padding:2px 8px;
+    border-radius:100px;
+    white-space:nowrap;
   }
   .focus{
     font-size:13.5px;
@@ -303,25 +326,60 @@
     <button class="chip" data-filter="executive" aria-pressed="false">領導 Executive</button>
   </nav>
 
+  <nav class="filters" id="catFilters" aria-label="依分類篩選"></nav>
+
   <p class="count-line" id="countLine"></p>
 
   <main class="grid" id="grid"></main>
 
   <footer>
-    <p><strong>關於登入：</strong>右上角可用 Google 帳號登入，目前僅用於身分識別；日後的線上編輯功能會需要先登入才能使用。</p>
-    <p><strong>關於共編：</strong>證照資料存放在 <code>data/certs.json</code>，與頁面邏輯分開管理。歡迎直接開 Pull Request 更新內容，格式錯誤會被 <code>scripts/validate.mjs</code> 自動擋下，詳見 <a class="source-link" href="https://github.com/JAYHUANG861204/ai-agent-certifications/blob/master/CONTRIBUTING.md" target="_blank" rel="noopener">CONTRIBUTING.md</a>。尚未接上自動化每日爬蟲——內容仍需人工核實後提交。</p>
+    <p><strong>關於登入：</strong>右上角可用 Google 帳號登入。登入後會出現「同步資料到資料庫」按鈕，可以把 <code>data/certs.json</code> 目前的內容整批寫入 Firestore；網頁預設會優先顯示 Firestore 資料庫裡的內容，資料庫是空的時候才會退回讀取靜態檔案。</p>
+    <p><strong>關於共編：</strong>證照資料的「原始檔」存放在 <code>data/certs.json</code>（分類定義在 <code>data/categories.json</code>），與頁面邏輯分開管理。歡迎直接開 Pull Request 更新內容，格式錯誤會被 <code>scripts/validate.mjs</code> 自動擋下，詳見 <a class="source-link" href="https://github.com/JAYHUANG861204/ai-agent-certifications/blob/master/CONTRIBUTING.md" target="_blank" rel="noopener">CONTRIBUTING.md</a>。PR 合併後還需要有人登入按一次同步，資料庫才會更新。</p>
     <p><strong>資料來源：</strong>各證照卡片右下角皆附原始參考連結；價格、時長、通過門檻等細節可能隨廠商調整，正式報名前請以官方頁面為準。</p>
     <p><strong>關於「台灣考試」欄位：</strong>AWS、Microsoft、Oracle 系列透過 Pearson VUE 排考，台北有實體考場（也可選線上 OnVUE 監考）；Google Cloud、Salesforce、NVIDIA、UiPath、GSDC、ADaSci 皆為純線上監考，台灣不在任何已知的地區限制名單內，僅需準備可用網路攝影機的穩定網路環境與英文姓名一致的證件。</p>
   </footer>
 </div>
 
-<script>
-  let DATA = [];
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  import {
+    getFirestore, collection, getDocs, doc, getDoc, writeBatch
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA2l02nVhOF7QovoQAn2NfoL5HvI7x1Y90",
+    authDomain: "iso-cert--radar.firebaseapp.com",
+    projectId: "iso-cert--radar",
+    storageBucket: "iso-cert--radar.firebasestorage.app",
+    messagingSenderId: "70661723775",
+    appId: "1:70661723775:web:d8291ad567ae1d45e9514a"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  const authBox = document.getElementById('authBox');
   const grid = document.getElementById('grid');
   const countLine = document.getElementById('countLine');
+  const catFiltersNav = document.getElementById('catFilters');
 
-  function render(filter){
-    const items = filter === 'all' ? DATA : DATA.filter(d => d.level === filter);
+  let DATA = [];
+  let CATEGORIES = [];
+  let categoryLabel = {};
+  let levelFilter = 'all';
+  let categoryFilter = 'all';
+
+  // ---------- 篩選 + 卡片渲染 ----------
+  function render(){
+    const items = DATA.filter(d =>
+      (levelFilter === 'all' || d.level === levelFilter) &&
+      (categoryFilter === 'all' || (d.categories || []).includes(categoryFilter))
+    );
     countLine.textContent = `顯示 ${items.length} / ${DATA.length} 張證照`;
     grid.innerHTML = items.map(d => `
       <article class="card">
@@ -333,6 +391,7 @@
           <div class="cert-name">${d.name}</div>
           ${d.code !== "—" ? `<div class="cert-code">${d.code}</div>` : ``}
         </div>
+        <div class="cat-tags">${(d.categories || []).map(c => `<span class="cat-tag">${categoryLabel[c] || c}</span>`).join('')}</div>
         <p class="focus">${d.focus}</p>
         <div class="stat-row">
           <div class="stat"><span>費用</span><b>${d.price}</b></div>
@@ -347,50 +406,82 @@
     `).join('');
   }
 
+  function buildCategoryFilters(){
+    catFiltersNav.innerHTML = `<span class="filter-label">篩選分類</span>` +
+      `<button class="chip" data-filter="all" aria-pressed="true">全部類別</button>` +
+      CATEGORIES.map(c => `<button class="chip" data-filter="${c.id}" aria-pressed="false">${c.label}</button>`).join('');
+  }
+
   document.getElementById('filters').addEventListener('click', (e) => {
     const btn = e.target.closest('.chip');
-    if(!btn) return;
-    document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed','false'));
-    btn.setAttribute('aria-pressed','true');
-    render(btn.dataset.filter);
+    if (!btn) return;
+    document.querySelectorAll('#filters .chip').forEach(c => c.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+    levelFilter = btn.dataset.filter;
+    render();
   });
 
-  fetch('data/certs.json')
-    .then(res => {
-      if(!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
-    .then(json => {
-      DATA = json.certs;
-      document.getElementById('totalCount').textContent = DATA.length;
-      document.getElementById('lastUpdated').textContent = json.meta.updated;
-      render('all');
-    })
-    .catch(err => {
-      countLine.textContent = '資料載入失敗：' + err.message;
-    });
-</script>
+  catFiltersNav.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if (!btn) return;
+    document.querySelectorAll('#catFilters .chip').forEach(c => c.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+    categoryFilter = btn.dataset.filter;
+    render();
+  });
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import {
-    getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  // ---------- 資料載入：Firestore 優先，空的話退回靜態 JSON ----------
+  async function loadStaticData(){
+    const [certsRes, catsRes] = await Promise.all([fetch('data/certs.json'), fetch('data/categories.json')]);
+    if (!certsRes.ok) throw new Error('HTTP ' + certsRes.status);
+    const certsJson = await certsRes.json();
+    const catsJson = await catsRes.json();
+    return { certs: certsJson.certs, categories: catsJson.categories, updated: certsJson.meta.updated };
+  }
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyA2l02nVhOF7QovoQAn2NfoL5HvI7x1Y90",
-    authDomain: "iso-cert--radar.firebaseapp.com",
-    projectId: "iso-cert--radar",
-    storageBucket: "iso-cert--radar.firebasestorage.app",
-    messagingSenderId: "70661723775",
-    appId: "1:70661723775:web:d8291ad567ae1d45e9514a"
-  };
+  async function loadFromFirestore(){
+    const [certsSnap, catsSnap] = await Promise.all([
+      getDocs(collection(db, 'certifications')),
+      getDocs(collection(db, 'categories')),
+    ]);
+    if (certsSnap.empty) return null;
+    let updated = null;
+    try {
+      const metaSnap = await getDoc(doc(db, 'meta', 'certs'));
+      if (metaSnap.exists()) updated = metaSnap.data().updated;
+    } catch { /* 讀不到 meta 就算了，不影響證照本身 */ }
+    return {
+      certs: certsSnap.docs.map(d => d.data()),
+      categories: catsSnap.docs.map(d => d.data()),
+      updated,
+    };
+  }
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const provider = new GoogleAuthProvider();
-  const authBox = document.getElementById('authBox');
+  async function bootstrap(){
+    let source;
+    try {
+      source = await loadFromFirestore();
+    } catch (err) {
+      console.warn('讀取 Firestore 失敗，改用靜態資料：', err.message);
+    }
+    if (!source) {
+      source = await loadStaticData();
+    }
+    DATA = source.certs;
+    CATEGORIES = source.categories;
+    categoryLabel = Object.fromEntries(CATEGORIES.map(c => [c.id, c.label]));
+    categoryFilter = 'all';
+    document.getElementById('totalCount').textContent = DATA.length;
+    document.getElementById('lastUpdated').textContent = source.updated || '—';
+    buildCategoryFilters();
+    render();
+  }
 
+  bootstrap().catch(err => {
+    countLine.textContent = '資料載入失敗：' + err.message;
+  });
+
+  // ---------- Google 登入 ----------
   const GOOGLE_G_ICON = `<svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
     <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.3-.1-2.7-.4-3.5z"/>
     <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.6 19 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
@@ -414,9 +505,34 @@
       <div class="user-chip">
         <img src="${user.photoURL || ''}" alt="">
         <span>${user.displayName || user.email}</span>
+        <button class="sync-btn" id="syncBtn">同步資料到資料庫</button>
         <button id="signOutBtn">登出</button>
       </div>`;
     document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
+    document.getElementById('syncBtn').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = '同步中…';
+      try {
+        const { certs, categories, updated } = await loadStaticData();
+        const batch = writeBatch(db);
+        certs.forEach(c => batch.set(doc(db, 'certifications', c.id), c));
+        categories.forEach(c => batch.set(doc(db, 'categories', c.id), c));
+        batch.set(doc(db, 'meta', 'certs'), {
+          updated,
+          syncedAt: new Date().toISOString(),
+          syncedBy: auth.currentUser?.email || null,
+        });
+        await batch.commit();
+        await bootstrap();
+        btn.textContent = '✓ 已同步';
+      } catch (err) {
+        alert('同步失敗：' + err.message);
+        btn.textContent = '同步資料到資料庫';
+      } finally {
+        btn.disabled = false;
+      }
+    });
   }
 
   onAuthStateChanged(auth, user => {

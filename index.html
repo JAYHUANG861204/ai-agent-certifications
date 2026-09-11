@@ -255,9 +255,9 @@
     <h1>AI Agent 證照地圖</h1>
     <p class="lede">整理目前(2026 年)主要廠商推出的 AI Agent / Agentic AI 相關證照，依基礎、助理、專業、領導四個等級分類，方便評估要考哪一張。</p>
     <div class="meta-row">
-      <span class="meta-chip">最後更新 <b>2026-09-10</b></span>
+      <span class="meta-chip">最後更新 <b id="lastUpdated">—</b></span>
       <span class="meta-chip">共收錄 <b id="totalCount">0</b> 張證照</span>
-      <span class="meta-chip">更新方式：<b>人工核實</b></span>
+      <span class="meta-chip">更新方式：<b>共編（PR 審核）</b></span>
     </div>
   </header>
 
@@ -275,188 +275,16 @@
   <main class="grid" id="grid"></main>
 
   <footer>
-    <p><strong>關於更新頻率：</strong>目前頁面內容為手動搜尋、整理、核實後產生，尚未接上自動化每日爬蟲。若要做到「每天自動更新」，需要另外設定排程任務（例如每日執行一次搜尋比對，再自動提交更新到 GitHub），這部分屬於會持續往外部網站發送請求、並自動推送程式碼的自動化行為，建議在確認頁面內容沒問題後，另外討論排程細節與頻率再啟用。</p>
+    <p><strong>關於共編：</strong>證照資料存放在 <code>data/certs.json</code>，與頁面邏輯分開管理。歡迎直接開 Pull Request 更新內容，格式錯誤會被 <code>scripts/validate.mjs</code> 自動擋下，詳見 <a class="source-link" href="https://github.com/JAYHUANG861204/ai-agent-certifications/blob/master/CONTRIBUTING.md" target="_blank" rel="noopener">CONTRIBUTING.md</a>。尚未接上自動化每日爬蟲——內容仍需人工核實後提交。</p>
     <p><strong>資料來源：</strong>各證照卡片右下角皆附原始參考連結；價格、時長、通過門檻等細節可能隨廠商調整，正式報名前請以官方頁面為準。</p>
     <p><strong>關於「台灣考試」欄位：</strong>AWS、Microsoft、Oracle 系列透過 Pearson VUE 排考，台北有實體考場（也可選線上 OnVUE 監考）；Google Cloud、Salesforce、NVIDIA、UiPath、GSDC、ADaSci 皆為純線上監考，台灣不在任何已知的地區限制名單內，僅需準備可用網路攝影機的穩定網路環境與英文姓名一致的證件。</p>
   </footer>
 </div>
 
 <script>
-  const DATA = [
-    {
-      provider: "NVIDIA",
-      name: "NVIDIA-Certified Professional: Agentic AI",
-      code: "NCP-AAI",
-      level: "professional",
-      levelLabel: "專業 Professional",
-      price: "US$200",
-      format: "線上監考・120 分鐘・60–70 題",
-      focus: "涵蓋 Agent 架構設計、多代理框架、工具/模型整合、評估調校、部署維運與安全防護，效期 2 年。",
-      url: "https://www.nvidia.com/en-us/learn/certification/agentic-ai-professional/",
-      taiwan: "線上遠端監考，不限地點",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "AWS",
-      name: "AWS Certified AI Practitioner",
-      code: "AIF-C01",
-      level: "foundational",
-      levelLabel: "基礎 Foundational",
-      price: "查官網",
-      format: "入門等級",
-      focus: "生成式 AI 基礎概念、提示工程、負責任 AI，以及 Bedrock、SageMaker、Amazon Q 等 AWS 服務總覽。",
-      url: "https://www.examcert.app/blog/agentic-ai-certifications-2026/",
-      taiwan: "實體(台北 Pearson VUE)／線上皆可",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "AWS",
-      name: "AWS Certified Machine Learning Engineer – Associate",
-      code: "MLA-C01",
-      level: "associate",
-      levelLabel: "助理 Associate",
-      price: "查官網",
-      format: "助理等級",
-      focus: "模型生命週期、推論端點、特徵存儲與 MLOps，並涵蓋 Bedrock Agents 的建置與協調。",
-      url: "https://www.examcert.app/blog/agentic-ai-certifications-2026/",
-      taiwan: "實體(台北 Pearson VUE)／線上皆可",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "Microsoft",
-      name: "Azure AI Engineer Associate",
-      code: "AI-102",
-      level: "associate",
-      levelLabel: "助理 Associate",
-      price: "查官網",
-      format: "助理等級",
-      focus: "Azure OpenAI、AI Foundry、Semantic Kernel 與 Agent 協調模式的實作能力。",
-      url: "https://www.examcert.app/blog/agentic-ai-certifications-2026/",
-      taiwan: "實體(台北 Pearson VUE)／線上皆可",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "Microsoft",
-      name: "Azure AI Fundamentals",
-      code: "AI-900",
-      level: "foundational",
-      levelLabel: "基礎 Foundational",
-      price: "US$99",
-      format: "60 分鐘・入門等級",
-      focus: "微軟 2026 年證照體系中最容易入門的一張，適合完全沒有 AI 背景的人建立基礎概念。",
-      url: "https://www.molecularcloud.org/p/microsoft-ai-certifications-list-2026-every-credential-you-actually-need-to-know",
-      taiwan: "實體(台北 Pearson VUE)／線上皆可",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "Microsoft",
-      name: "Certified Agentic AI Business Solutions Architect",
-      code: "AB-100",
-      level: "professional",
-      levelLabel: "專業 Professional",
-      price: "查官網",
-      format: "2026 年新推出",
-      focus: "鎖定企業導入 Agentic AI 的解決方案架構師，著重業務流程與 Agent 架構的對應設計。",
-      url: "https://www.myexamcloud.com/blog/agentic-ai-certification-path-in-2026.article",
-      taiwan: "實體(台北 Pearson VUE)／線上皆可",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "Google Cloud",
-      name: "Generative AI Leader",
-      code: "—",
-      level: "executive",
-      levelLabel: "領導 Executive",
-      price: "US$99",
-      format: "90 分鐘・50–60 題",
-      focus: "面向非技術背景的主管與決策者，聚焦 AI 策略、治理與導入判斷，不需要工程實作能力。",
-      url: "https://certificationpractice.com/exam-overviews/google-cloud-generative-ai-leader-quick-facts",
-      taiwan: "線上遠端監考，不限地點",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "Google Cloud",
-      name: "Professional Machine Learning Engineer",
-      code: "PMLE",
-      level: "professional",
-      levelLabel: "專業 Professional",
-      price: "US$200",
-      format: "120 分鐘・50–60 題",
-      focus: "2026 年 6 月改版後，考點從 Vertex AI 管線轉向 Gemini Enterprise Agent Platform 與 Vertex AI Agent Builder。",
-      url: "https://flashgenius.net/blog-article/google-professional-machine-learning-engineer-certification-2026-guide",
-      taiwan: "線上遠端監考，不限地點",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "Salesforce",
-      name: "Certified Agentforce Specialist",
-      code: "—",
-      level: "associate",
-      levelLabel: "助理 Associate",
-      price: "US$75（重考 US$50）",
-      format: "105 分鐘・60 題・73% 及格",
-      focus: "驗證在 Salesforce 平台上設定、測試並部署 Agentforce 自主代理人的實作能力，無報名門檻。",
-      url: "https://trailhead.salesforce.com/content/learn/modules/cert-prep-agentforce-specialist/get-started-with-salesforce-agentforce-specialist-certification-prep",
-      taiwan: "線上遠端監考，不限地點",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "UiPath",
-      name: "Certified Professional – Agentic Automation Associate",
-      code: "—",
-      level: "associate",
-      levelLabel: "助理 Associate",
-      price: "查官網",
-      format: "助理等級",
-      focus: "驗證與 AI Agent 協作的基礎能力，技術與非技術角色皆適用，屬於 UiPath 代理式自動化入門證照。",
-      url: "https://www.uipath.com/learning/certification",
-      taiwan: "純線上，不限地點",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "Oracle",
-      name: "OCI Generative AI Professional",
-      code: "—",
-      level: "professional",
-      levelLabel: "專業 Professional",
-      price: "查官網",
-      format: "專業等級",
-      focus: "涵蓋 RAG 架構、Agent 設計模式與 OCI Generative AI 相關服務的整合應用。",
-      url: "https://www.examcert.app/blog/agentic-ai-certifications-2026/",
-      taiwan: "實體(台北 Pearson VUE)／線上皆可",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "GSDC",
-      name: "Certified Agentic AI Professional",
-      code: "CAAIP",
-      level: "professional",
-      levelLabel: "專業 Professional",
-      price: "低價位",
-      format: "線上自主考試",
-      focus: "預算有限但想要一張具備線上監考效力證照的選項，內容涵蓋 Agentic AI 基本原理與應用。",
-      url: "https://adasci.org/blog/best-agentic-ai-certifications-2026-comparison",
-      taiwan: "純線上，不限地點",
-      verified: "2026-09-10"
-    },
-    {
-      provider: "ADaSci",
-      name: "Certified Agentic AI System Architect",
-      code: "CAASA",
-      level: "professional",
-      levelLabel: "專業 Professional",
-      price: "查官網",
-      format: "30 小時課程・監考測驗",
-      focus: "針對想要完整、有監考測驗背書的工程師與解決方案架構師，涵蓋完整 Agentic AI 系統設計流程。",
-      url: "https://adasci.org/blog/best-agentic-ai-certifications-2026-comparison",
-      taiwan: "純線上監考，不限地點",
-      verified: "2026-09-10"
-    }
-  ];
-
+  let DATA = [];
   const grid = document.getElementById('grid');
   const countLine = document.getElementById('countLine');
-  document.getElementById('totalCount').textContent = DATA.length;
 
   function render(filter){
     const items = filter === 'all' ? DATA : DATA.filter(d => d.level === filter);
@@ -493,5 +321,18 @@
     render(btn.dataset.filter);
   });
 
-  render('all');
+  fetch('data/certs.json')
+    .then(res => {
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(json => {
+      DATA = json.certs;
+      document.getElementById('totalCount').textContent = DATA.length;
+      document.getElementById('lastUpdated').textContent = json.meta.updated;
+      render('all');
+    })
+    .catch(err => {
+      countLine.textContent = '資料載入失敗：' + err.message;
+    });
 </script>

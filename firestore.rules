@@ -16,5 +16,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null;
     }
+
+    // 白名單設定：網頁需要讀它來檢查誰能登入看內容，所以公開可讀。
+    // 不開放任何用戶端寫入 — 只能透過 Firebase Console 的 Firestore 資料頁簽手動編輯
+    // （Console 用管理員權限操作，不受這條規則限制，所以這樣設定不會讓你自己也編輯不了）。
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
   }
 }

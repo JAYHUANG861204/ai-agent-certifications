@@ -193,6 +193,16 @@
     font-family:'IBM Plex Mono',monospace;
   }
 
+  .gate{
+    display:flex;flex-direction:column;align-items:center;gap:16px;
+    padding:56px 20px;
+    color:var(--text-dim);
+    font-size:14px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--surface);
+  }
+
   .grid{
     display:grid;
     grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
@@ -317,6 +327,13 @@
     </div>
   </header>
 
+  <div id="gate" class="gate">
+    <p>登入後才能查看證照內容。</p>
+    <button class="auth-btn" id="gateSignInBtn">使用 Google 登入</button>
+  </div>
+
+  <div id="protected" hidden>
+
   <nav class="filters" id="filters" aria-label="依等級篩選">
     <span class="filter-label">篩選等級</span>
     <button class="chip" data-filter="all" aria-pressed="true">全部</button>
@@ -333,11 +350,13 @@
   <main class="grid" id="grid"></main>
 
   <footer>
-    <p><strong>關於登入：</strong>右上角可用 Google 帳號登入。登入後會出現「同步資料到資料庫」按鈕，可以把 <code>data/certs.json</code> 目前的內容整批寫入 Firestore；網頁預設會優先顯示 Firestore 資料庫裡的內容，資料庫是空的時候才會退回讀取靜態檔案。</p>
+    <p><strong>關於登入：</strong>右上角可用 Google 帳號登入，登入後才能瀏覽內容。登入後會出現「同步資料到資料庫」按鈕，可以把 <code>data/certs.json</code> 目前的內容整批寫入 Firestore；網頁預設會優先顯示 Firestore 資料庫裡的內容，資料庫是空的時候才會退回讀取靜態檔案。</p>
     <p><strong>關於共編：</strong>證照資料的「原始檔」存放在 <code>data/certs.json</code>（分類定義在 <code>data/categories.json</code>），與頁面邏輯分開管理。歡迎直接開 Pull Request 更新內容，格式錯誤會被 <code>scripts/validate.mjs</code> 自動擋下，詳見 <a class="source-link" href="https://github.com/JAYHUANG861204/ai-agent-certifications/blob/master/CONTRIBUTING.md" target="_blank" rel="noopener">CONTRIBUTING.md</a>。PR 合併後還需要有人登入按一次同步，資料庫才會更新。</p>
     <p><strong>資料來源：</strong>各證照卡片右下角皆附原始參考連結；價格、時長、通過門檻等細節可能隨廠商調整，正式報名前請以官方頁面為準。</p>
     <p><strong>關於「台灣考試」欄位：</strong>AWS、Microsoft、Oracle 系列透過 Pearson VUE 排考，台北有實體考場（也可選線上 OnVUE 監考）；Google Cloud、Salesforce、NVIDIA、UiPath、GSDC、ADaSci 皆為純線上監考，台灣不在任何已知的地區限制名單內，僅需準備可用網路攝影機的穩定網路環境與英文姓名一致的證件。</p>
   </footer>
+
+  </div>
 </div>
 
 <script type="module">
@@ -364,9 +383,20 @@
   const provider = new GoogleAuthProvider();
 
   const authBox = document.getElementById('authBox');
+  const gateEl = document.getElementById('gate');
+  const protectedEl = document.getElementById('protected');
   const grid = document.getElementById('grid');
   const countLine = document.getElementById('countLine');
   const catFiltersNav = document.getElementById('catFilters');
+
+  function doSignIn(){
+    signInWithPopup(auth, provider).catch(err => {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        alert('登入失敗：' + err.message);
+      }
+    });
+  }
+  document.getElementById('gateSignInBtn').addEventListener('click', doSignIn);
 
   let DATA = [];
   let CATEGORIES = [];
@@ -491,13 +521,9 @@
 
   function renderSignedOut(){
     authBox.innerHTML = `<button class="auth-btn" id="signInBtn">${GOOGLE_G_ICON}使用 Google 登入</button>`;
-    document.getElementById('signInBtn').addEventListener('click', () => {
-      signInWithPopup(auth, provider).catch(err => {
-        if (err.code !== 'auth/popup-closed-by-user') {
-          alert('登入失敗：' + err.message);
-        }
-      });
-    });
+    document.getElementById('signInBtn').addEventListener('click', doSignIn);
+    gateEl.hidden = false;
+    protectedEl.hidden = true;
   }
 
   function renderSignedIn(user){
@@ -509,6 +535,8 @@
         <button id="signOutBtn">登出</button>
       </div>`;
     document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
+    gateEl.hidden = true;
+    protectedEl.hidden = false;
     document.getElementById('syncBtn').addEventListener('click', async (e) => {
       const btn = e.currentTarget;
       btn.disabled = true;

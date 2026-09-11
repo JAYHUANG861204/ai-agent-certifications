@@ -193,15 +193,30 @@
     font-family:'IBM Plex Mono',monospace;
   }
 
-  .gate{
-    display:flex;flex-direction:column;align-items:center;gap:16px;
-    padding:56px 20px;
-    color:var(--text-dim);
-    font-size:14px;
-    border:1px solid var(--border);
-    border-radius:10px;
-    background:var(--surface);
+  .gate-screen{
+    min-height:70vh;
+    display:flex;align-items:center;justify-content:center;
+    padding-block:60px;
   }
+  .gate-card{
+    width:100%;max-width:420px;
+    display:flex;flex-direction:column;align-items:center;gap:14px;
+    text-align:center;
+    padding:44px 32px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+  }
+  .gate-card .eyebrow{margin-bottom:2px;}
+  .gate-card h1{
+    font-family:'Source Serif 4', Georgia, serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0;
+    text-wrap:balance;
+  }
+  .gate-card p{color:var(--text-dim);font-size:14px;line-height:1.6;margin:0;max-width:32ch;}
+  .gate-card .auth-btn{margin-top:6px;font-size:14px;padding:10px 22px 10px 16px;}
 
   .grid{
     display:grid;
@@ -313,6 +328,17 @@
 </style>
 
 <div class="wrap">
+  <div id="gate" class="gate-screen">
+    <div class="gate-card">
+      <div class="eyebrow">Credential Tracker</div>
+      <h1>AI Agent 證照地圖</h1>
+      <p>需要用 Google 帳號登入並授權後，才能查看證照內容。</p>
+      <button class="auth-btn" id="gateSignInBtn">使用 Google 登入</button>
+    </div>
+  </div>
+
+  <div id="protected" hidden>
+
   <header>
     <div class="header-top">
       <div class="eyebrow">Credential Tracker</div>
@@ -326,13 +352,6 @@
       <span class="meta-chip">更新方式：<b>共編（PR 審核）</b></span>
     </div>
   </header>
-
-  <div id="gate" class="gate">
-    <p>登入後才能查看證照內容。</p>
-    <button class="auth-btn" id="gateSignInBtn">使用 Google 登入</button>
-  </div>
-
-  <div id="protected" hidden>
 
   <nav class="filters" id="filters" aria-label="依等級篩選">
     <span class="filter-label">篩選等級</span>
@@ -519,9 +538,10 @@
     <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.3 5.2C40.9 36 44 30.6 44 24c0-1.3-.1-2.7-.4-3.5z"/>
   </svg>`;
 
+  document.getElementById('gateSignInBtn').innerHTML = GOOGLE_G_ICON + '使用 Google 登入';
+
   function renderSignedOut(){
-    authBox.innerHTML = `<button class="auth-btn" id="signInBtn">${GOOGLE_G_ICON}使用 Google 登入</button>`;
-    document.getElementById('signInBtn').addEventListener('click', doSignIn);
+    authBox.innerHTML = '';
     gateEl.hidden = false;
     protectedEl.hidden = true;
   }
